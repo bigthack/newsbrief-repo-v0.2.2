@@ -54,13 +54,13 @@ jobs:
           python scripts/demo.py --topic climate --limit 3 --format all --outdir scripts/out/climate
 
       # Manual run with sane defaults if inputs blank
-      - name: Run manual demo inputs
+      - name: Run manual live demo
         if: github.event_name == 'workflow_dispatch'
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
           LIMIT="${{ github.event.inputs.limit }}"
-          FORMAT="${{ github.event.inputs.format }}"
-          python scripts/demo.py --topic "${TOPIC:-demo}" --limit "${LIMIT:-3}" --format "${FORMAT:-all}" --outdir scripts/out/manual
+          FORMAT="${{ github.event.inputs.format }}"  # unused here; kept for UI consistency
+          python scripts/live_demo.py --topic "${TOPIC:-tech}" --limit "${LIMIT:-3}" --outdir scripts/out/live
 
       - name: Debug list generated outputs
         run: |
