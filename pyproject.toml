@@ -1,60 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "newsbrief"
-version = "0.1.1"
-description = "Agent-friendly scaffold for an AI-powered daily news brief"
+version = "0.2.2"
+description = "NewsBrief scaffold: demo pipelines, templates, Pages publishing"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "NewsBrief" }]
 dependencies = [
-    "fastapi>=0.110",
-    "uvicorn[standard]>=0.27",
-    "pydantic-settings>=2.2",
-    "requests>=2.31",
-    "python-dotenv>=1.0",
-    "loguru>=0.7.2",
-    "orjson>=3.10.0",
-    "structlog>=24.1.0",
-    "jinja2>=3.1",
-    "feedparser>=6.0",
-    "beautifulsoup4>=4.12",
-    "readability-lxml>=0.8.1",
-    "sqlalchemy>=2.0",
-    "psycopg2-binary>=2.9",
-    "alembic>=1.13",
-    "redis>=5.0",
-    "celery>=5.3",
-    "boto3>=1.34",
+  "jinja2>=3.1.2",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
-    "pytest-cov>=4.1",
-    "mypy>=1.10",
-    "ruff>=0.5.0",
-    "black>=24.4.2",
-    "bandit>=1.7.8",
-    "httpx>=0.27.0",
-    "types-requests",
-    "types-redis",
-    "prance>=23.6.21",
+  "pytest>=7.4",
+  "jsonschema>=4.22",
 ]
 
-[tool.black]
-line-length = 100
+[project.urls]
+Homepage = "https://bigthack.github.io/newsbrief-repo-v0.2.2/"
+Repository = "https://github.com/bigthack/newsbrief-repo-v0.2.2"
+Issues = "https://github.com/bigthack/newsbrief-repo-v0.2.2/issues"
 
-[tool.ruff]
-line-length = 100
-select = ["E","F","I","B","UP","N","S"]
-ignore = ["S101"]
+# No installable packages/modules needed for this scaffold; we just want deps.
+[tool.setuptools]
+py-modules = []
 
-[tool.mypy]
-python_version = "3.11"
-strict = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-
+# (Optional, nice-to-have) pytest defaults
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
