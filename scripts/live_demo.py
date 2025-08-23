@@ -9,14 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 TPL = ROOT / "emailer" / "templates"
 
 def norm(s: str) -> str:
-    s = re.sub(r"\s+", " ", (s or "")).strip()
-    return s
+    return re.sub(r"\s+", " ", (s or "")).strip()
 
 def hsh(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8", "ignore")).hexdigest()[:10]
 
 def fetch_items(urls: list[str], max_items: int) -> list[dict]:
-    out = []
+    out: list[dict] = []
     for u in urls:
         try:
             feed = feedparser.parse(u)
@@ -33,30 +32,30 @@ def fetch_items(urls: list[str], max_items: int) -> list[dict]:
 
 def extract_text(url: str) -> str:
     try:
-        txt = trafilatura.fetch_url(url)
-        if not txt:
+        raw = trafilatura.fetch_url(url)
+        if not raw:
             return ""
-        art = trafilatura.extract(txt, include_comments=False, include_tables=False, favor_recall=True)
+        art = trafilatura.extract(raw, include_comments=False, include_tables=False, favor_recall=True)
         return norm(art or "")
     except Exception:
         return ""
 
 def dedupe(items: list[dict]) -> list[dict]:
-    seen = set()
-    uniq = []
+    seen: set[str] = set()
+    uniq: list[dict] = []
     for it in items:
-        key = hsh(it["title"].lower())
+        key = hsh((it["title"] or "").lower())
         if key in seen: 
             continue
-        seen.add(key); uniq.append(it)
+        seen.add(key)
+        uniq.append(it)
     return uniq
 
 def build_manifest(topic: str, items: list[dict], limit: int) -> dict:
     date_str = dt.date.today().isoformat()
     stories = []
-    for i, it in enumerate(items[:limit], 1):
+    for it in items[:limit]:
         text = extract_text(it["link"])
-        # Minimal, safe “summary” lines from sources (no model yet)
         lines = []
         if it["summary"]:
             lines.append({"sentence": it["summary"][:220], "source": 1})
@@ -82,19 +81,24 @@ def render_outputs(brief: dict, outdir: Path) -> list[Path]:
     cards_tpl = env.get_template("cards.html")
     outdir.mkdir(parents=True, exist_ok=True)
     date_str = brief["date"]
-    paths = []
-    (outdir / f"daily-{date_str}.json").write_text(json.dumps(brief, ensure_ascii=False, indent=2), encoding="utf-8"); paths.append(outdir / f"daily-{date_str}.json")
-    # TXT (simple)
+    paths: list[Path] = []
+    # JSON
+    p = outdir / f"daily-{date_str}.json"
+    p.write_text(json.dumps(brief, ensure_ascii=False, indent=2), encoding="utf-8"); paths.append(p)
+    # TXT
     txt_lines = [f"Daily Brief — {date_str}", ""]
     for s in brief["stories"]:
         txt_lines.append(s["headline"])
         for ln in s["summary"]:
             txt_lines.append(f"  • {ln['sentence']} [{ln['source']}]")
         txt_lines.append("")
-    (outdir / f"daily-{date_str}.txt").write_text("\n".join(txt_lines).strip()+"\n", encoding="utf-8"); paths.append(outdir / f"daily-{date_str}.txt")
+    p = outdir / f"daily-{date_str}.txt"
+    p.write_text("\n".join(txt_lines).strip()+"\n", encoding="utf-8"); paths.append(p)
     # HTMLs
-    (outdir / f"daily-{date_str}.html").write_text(daily_tpl.render(date=brief["date"], stories=brief["stories"]), encoding="utf-8"); paths.append(outdir / f"daily-{date_str}.html")
-    (outdir / f"daily-{date_str}.cards.html").write_text(cards_tpl.render(date=brief["date"], stories=brief["stories"]), encoding="utf-8"); paths.append(outdir / f"daily-{date_str}.cards.html")
+    p = outdir / f"daily-{date_str}.html"
+    p.write_text(daily_tpl.render(date=brief["date"], stories=brief["stories"]), encoding="utf-8"); paths.append(p)
+    p = outdir / f"daily-{date_str}.cards.html"
+    p.write_text(cards_tpl.render(date=brief["date"], stories=brief["stories"]), encoding="utf-8"); paths.append(p)
     return paths
 
 def main() -> int:
@@ -111,12 +115,11 @@ def main() -> int:
         print(f"No feeds configured for topic={args.topic}", file=sys.stderr)
         return 2
 
-    items = fetch_items(urls, max_items=args.limit)
-    items = dedupe(items)
+    items = dedupe(fetch_items(urls, max_items=args.limit))
     brief = build_manifest(args.topic, items, args.limit)
     out = Path(args.outdir) / args.topic
-    paths = render_outputs(brief, out)
-    for p in paths: print(p)
+    for p in render_outputs(brief, out):
+        print(p)
     return 0
 
 if __name__ == "__main__":

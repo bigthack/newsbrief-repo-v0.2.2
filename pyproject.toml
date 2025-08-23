@@ -12,26 +12,25 @@ license = { text = "MIT" }
 authors = [{ name = "NewsBrief" }]
 dependencies = [
   "jinja2>=3.1.2",
-  "feedparser>=6.0.11",       # RSS/Atom parsing
-  "trafilatura>=1.7.0",       # robust article text extraction
+  "jsonschema>=4.22",
+  "feedparser>=6.0.11",
+  "trafilatura>=1.7.0",
+  "PyYAML>=6.0.1",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=7.4",
-  "jsonschema>=4.22",
 ]
 
 [project.urls]
-Homepage = "https://bigthack.github.io/newsbrief-repo-v0.2.2/"
+Homepage  = "https://bigthack.github.io/newsbrief-repo-v0.2.2/"
 Repository = "https://github.com/bigthack/newsbrief-repo-v0.2.2"
-Issues = "https://github.com/bigthack/newsbrief-repo-v0.2.2/issues"
+Issues     = "https://github.com/bigthack/newsbrief-repo-v0.2.2/issues"
 
-# No installable packages/modules needed for this scaffold; we just want deps.
 [tool.setuptools]
 py-modules = []
 
-# (Optional, nice-to-have) pytest defaults
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]

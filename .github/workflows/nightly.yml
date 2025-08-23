@@ -2,8 +2,7 @@ name: nightly-demo
 
 on:
   schedule:
-    # 06:30 America/New_York ≈ 10:30 UTC
-    - cron: '30 10 * * *'
+    - cron: '30 10 * * *'  # ~06:30 America/New_York
   workflow_dispatch:
     inputs:
       topic:
@@ -44,22 +43,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-          pip install jinja2 jsonschema
+          # extra safety if extras not picked up
+          pip install jinja2 jsonschema feedparser trafilatura pyyaml
 
-      # Scheduled runs (two topics)
+      # Scheduled runs (kept as fixtures for now)
       - name: Run scheduled demos tech and climate
         if: github.event_name == 'schedule'
         run: |
           python scripts/demo.py --topic tech --limit 3 --format all --outdir scripts/out/tech
           python scripts/demo.py --topic climate --limit 3 --format all --outdir scripts/out/climate
 
-      # Manual run with sane defaults if inputs blank
+      # Manual run → live ingestion
       - name: Run manual live demo
         if: github.event_name == 'workflow_dispatch'
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
           LIMIT="${{ github.event.inputs.limit }}"
-          FORMAT="${{ github.event.inputs.format }}"  # unused here; kept for UI consistency
           python scripts/live_demo.py --topic "${TOPIC:-tech}" --limit "${LIMIT:-3}" --outdir scripts/out/live
 
       - name: Debug list generated outputs
@@ -68,7 +67,7 @@ jobs:
           ls -lah scripts/out || true
           echo
           echo "Recursive:"
-          find scripts/out -maxdepth 3 -type f -print || true
+          find scripts/out -maxdepth 4 -type f -print || true
           echo "::endgroup::"
 
       - name: Validate manifests
