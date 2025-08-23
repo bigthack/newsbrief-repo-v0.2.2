@@ -1,0 +1,10 @@
+# Safe starter feeds (adjust freely)
+tech:
+  - https://www.reuters.com/rssFeed/technologyNews
+  - https://www.theverge.com/rss/index.xml
+  - https://feeds.arstechnica.com/arstechnica/technology-lab
+world:
+  - https://feeds.bbci.co.uk/news/world/rss.xml
+  - https://www.aljazeera.com/xml/rss/all.xml
+business:
+  - https://feeds.a.dj.com/rss/RSSMarketsMain.xml
