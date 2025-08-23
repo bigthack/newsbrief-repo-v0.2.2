@@ -2,12 +2,12 @@ name: nightly-demo
 
 on:
   schedule:
-    # 06:30 America/New_York ≈ 10:30 UTC (adjust as you like)
+    # 06:30 America/New_York ≈ 10:30 UTC
     - cron: '30 10 * * *'
   workflow_dispatch:
     inputs:
       topic:
-        description: 'Topic keyword (e.g., tech, climate). Leave blank to skip manual run.'
+        description: 'Topic keyword (e.g., tech, climate)'
         required: false
         default: ''
       limit:
@@ -25,23 +25,20 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: false
 
 jobs:
   demo:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: |
-            pyproject.toml
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
         run: |
@@ -49,34 +46,33 @@ jobs:
           pip install -e .[dev]
           pip install jinja2 jsonschema
 
-      - name: Debug env
-        run: |
-          python -V
-          pip list
-
-      # Scheduled demo runs
-      - name: Run demo (tech, limit 3)
+      # Scheduled runs (two topics)
+      - name: Run scheduled demos tech and climate
         if: github.event_name == 'schedule'
         run: |
           python scripts/demo.py --topic tech --limit 3 --format all --outdir scripts/out/tech
-
-      - name: Run demo (climate, limit 3)
-        if: github.event_name == 'schedule'
-        run: |
           python scripts/demo.py --topic climate --limit 3 --format all --outdir scripts/out/climate
 
-      # Manual ad-hoc run
-      - name: Run demo (manual, inputs)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.topic != ''
+      # Manual run with sane defaults if inputs blank
+      - name: Run manual demo inputs
+        if: github.event_name == 'workflow_dispatch'
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
           LIMIT="${{ github.event.inputs.limit }}"
           FORMAT="${{ github.event.inputs.format }}"
-          python scripts/demo.py --topic "$TOPIC" --limit "$LIMIT" --format "$FORMAT" --outdir scripts/out/manual
+          python scripts/demo.py --topic "${TOPIC:-demo}" --limit "${LIMIT:-3}" --format "${FORMAT:-all}" --outdir scripts/out/manual
+
+      - name: Debug list generated outputs
+        run: |
+          echo "::group::scripts/out"
+          ls -lah scripts/out || true
+          echo
+          echo "Recursive:"
+          find scripts/out -maxdepth 3 -type f -print || true
+          echo "::endgroup::"
 
       - name: Validate manifests
-        run: |
-          python scripts/validate_manifest.py
+        run: python scripts/validate_manifest.py
 
       - name: Build feeds
         run: |
@@ -86,8 +82,7 @@ jobs:
           python scripts/build_feeds.py --base-url "$BASE_URL" --public-dir public
 
       - name: Build Pages index
-        run: |
-          python scripts/build_pages_index.py
+        run: python scripts/build_pages_index.py
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -95,11 +90,11 @@ jobs:
           path: public
 
   deploy:
+    needs: demo
+    runs-on: ubuntu-latest
     environment:
       name: demo
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: demo
-    runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
