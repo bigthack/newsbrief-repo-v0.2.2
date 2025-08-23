@@ -1,0 +1,50 @@
+name: ci
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install jsonschema
+      - name: Lint
+        run: |
+          ruff check .
+          black --check .
+          bandit -q -r api core ingestion nlp emailer personalization data || true
+      - name: Type check
+        run: mypy .
+      - name: Tests
+        run: pytest -q
+
+
+- name: Demo (fixtures → HTML/TXT)
+  run: |
+    python scripts/demo.py --topic "" --limit 5 --format both --outdir scripts/out
+- name: Upload demo artifacts
+  uses: actions/upload-artifact@v4
+  with:
+    name: demo-brief
+    path: scripts/out/*
+    if-no-files-found: warn
+
+
+- name: Validate JSON manifests
+  run: |
+    python scripts/demo.py --topic "" --limit 3 --format all --outdir scripts/out
+    python scripts/validate_manifest.py
+
+
+- name: Build feeds (local base)
+  run: |
+    python scripts/build_feeds.py --base-url "http://localhost:8000" --public-dir public

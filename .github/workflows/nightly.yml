@@ -1,0 +1,62 @@
+
+name: nightly-demo
+
+on:
+  schedule:
+    - cron: "30 10 * * *"   # 10:30 UTC daily ≈ 06:30 America/New_York (EDT)
+  
+workflow_dispatch:
+  inputs:
+    topic:
+      description: 'Topic keyword (e.g., tech, climate) — leave blank to run defaults'
+      required: false
+      default: ''
+    limit:
+      description: 'Max stories'
+      required: false
+      default: '3'
+    format:
+      description: 'Output format (html, txt, json, both, all)'
+      required: false
+      default: 'all'
+
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-demo
+  cancel-in-progress: false
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install jsonschema
+      
+- name: Run demo (tech, limit 3)
+  if: github.event_name == 'schedule'
+
+        run: |
+          python scripts/demo.py --topic tech --limit 3 --format both --outdir scripts/out
+      
+- name: Run demo (climate, limit 3)
+  if: github.event_name == 'schedule'
+
+        run: |
+          python scripts/demo.py --topic climate --limit 3 --format both --outdir scripts/out
+      - name: Upload nightly artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-demo-${{ github.run_id }}
+          path: scripts/out/*
+          retention-days: 7
+          if-no-files-found: warn

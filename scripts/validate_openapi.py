@@ -1,0 +1,1 @@
+import sys\nfrom prance import BaseParser\n\nif __name__ == '__main__':\n    if len(sys.argv) < 2:\n        print('Usage: python scripts/validate_openapi.py docs/openapi.yaml'); sys.exit(1)\n    BaseParser(sys.argv[1])\n    print('OpenAPI parsed successfully')\n

@@ -1,0 +1,1 @@
+# Daily pipeline runbook\n\n06:00 UTC cutoff → ingest → dedupe → cluster → summarise → factuality gate → render → send.\n

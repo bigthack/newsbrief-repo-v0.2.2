@@ -1,0 +1,1 @@
+# SPF/DKIM/DMARC quickstart\n\n1) SPF TXT at `news.yourdomain.com`: `v=spf1 include:_spf.YOUR_ESP ~all`\n2) DKIM TXT at `selector._domainkey.news.yourdomain.com` with ESP public key\n3) DMARC TXT at `_dmarc.news.yourdomain.com`: `v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com; ruf=mailto:dmarc@yourdomain.com; aspf=r; adkim=r;`\n

@@ -1,0 +1,78 @@
+openapi: 3.0.3
+info:
+  title: NewsBrief API
+  version: "0.1.1"
+paths:
+  /health:
+    get:
+      summary: Liveness probe
+      responses:
+        "200":
+          description: OK
+  /users:
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        "200":
+          description: User
+  /users/{id}/preferences:
+    put:
+      summary: Update preferences
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Preferences'
+      responses:
+        "200":
+          description: OK
+  /briefs/{date}:
+    get:
+      summary: Get brief for date
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Brief JSON
+  /briefs/ingestion/run:
+    post:
+      summary: Trigger ingestion (admin)
+      responses:
+        "200":
+          description: Queued
+components:
+  schemas:
+    UserCreate:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        tz: { type: string }
+      required: [email]
+    Preferences:
+      type: object
+      properties:
+        topics: { type: array, items: { type: string } }
+        length: { type: string, enum: [short, standard, deep] }
+        send_time: { type: string, example: "07:30" }
+        frequency: { type: string, enum: [weekdays, daily, custom] }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        tz: { type: string }
