@@ -33,18 +33,17 @@ A nightly GitHub Actions run renders demo briefs from fixtures and uploads them 
 
 > **Badge (update repo path after you push):**
 >
-> `![Nightly Demo](https://github.com/YOUR_GH_ORG/YOUR_REPO/actions/workflows/nightly.yml/badge.svg)`
->
+> [![Nightly Demo](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/nightly.yml/badge.svg)](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/nightly.yml)
 > Replace `YOUR_GH_ORG/YOUR_REPO` after importing this scaffold.
 
 
 
 ### Badges
-[![CI](https://github.com/YOUR_GH_ORG/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GH_ORG/YOUR_REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/ci.yml/badge.svg)](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/ci.yml)
 > Replace `YOUR_GH_ORG/YOUR_REPO` after pushing.
 
-[![Nightly Demo](https://github.com/YOUR_GH_ORG/YOUR_REPO/actions/workflows/nightly.yml/badge.svg)](https://github.com/YOUR_GH_ORG/YOUR_REPO/actions/workflows/nightly.yml)
-[![Pages](https://img.shields.io/badge/Pages-live-brightgreen)](https://YOUR_GH_ORG.github.io/YOUR_REPO/)
+[![Nightly Demo](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/nightly.yml/badge.svg)](https://github.com/bigthack/newsbrief-repo-v0.2.2/actions/workflows/nightly.yml)
+[![Pages](https://img.shields.io/website?url=https%3A%2F%2Fbigthack.github.io%2Fnewsbrief-repo-v0.2.2%2F)](https://bigthack.github.io/newsbrief-repo-v0.2.2/)
 
 
 ### JSON manifests
