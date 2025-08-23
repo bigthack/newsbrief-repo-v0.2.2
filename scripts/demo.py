@@ -1,154 +1,136 @@
-
 #!/usr/bin/env python3
-"""Tiny E2E demo with CLI flags:
-- Parse fixture RSS feeds (file://).
-- Optionally filter by --topic keyword(s) and --limit number of stories.
-- Extract main text, de-dupe near-duplicates.
-- Render daily brief email (HTML + TXT) with Jinja2.
-Outputs to --outdir (default: ./scripts/out/).
 """
+Demo brief generator for NewsBrief.
 
+Generates fixture-based outputs (HTML, TXT, JSON, Cards HTML) into an output dir.
+Used by CI and nightly workflows.
+
+Examples:
+  python scripts/demo.py --topic tech --limit 3 --format all --outdir scripts/out/tech
+  python scripts/demo.py --topic ""   --limit 3 --format both --outdir scripts/out/ci
+"""
 from __future__ import annotations
-import pathlib, datetime, os, argparse
+
+import argparse
+import datetime as _dt
+import json
+from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from ingestion.feeds.adapters.generic import GenericRSSAdapter
-from ingestion.feeds import extractor, dedupe
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-FIX = ROOT / "tests" / "fixtures"
-
-def _file_uri(p: pathlib.Path) -> str:
-    return p.resolve().as_uri()
-
-def parse_args():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--topic", type=str, default="", help="keyword filter (e.g., tech, climate)")
-    ap.add_argument("--limit", type=int, default=5, help="max stories in the brief")
-    ap.add_argument("--date", type=str, default="", help="YYYY-MM-DD override for brief date")
-    ap.add_argument("--outdir", type=str, default=str(ROOT / "scripts" / "out"), help="output folder")
-    ap.add_argument("--format", type=str, choices=["html","txt","json","cards","both","all"], default="both", help="output format")
-    return ap.parse_args()
-
-def main():
-    args = parse_args()
-    OUT = pathlib.Path(args.outdir)
-    OUT.mkdir(parents=True, exist_ok=True)
-
-    feeds = [
-        _file_uri(FIX / "rss" / "bbc.xml"),
-        _file_uri(FIX / "rss" / "reuters.xml"),
-    ]
-    adapter = GenericRSSAdapter()
-    items = []
-    for u in feeds:
-        items.extend(adapter.fetch_feed(u))
-
-    # simple topic keyword filter across title/description (case-insensitive)
-    topic_kw = (args.topic or "").strip().lower()
-    if topic_kw:
-        def keep(it):
-            blob = ((it.title or "") + " " + (it.description or "")).lower()
-            return topic_kw in blob
-        items = [it for it in items if keep(it)]
-
-    # map to fixture HTML content when title matches, else use description/title
-    html_map = {
-        "Markets rally on tech earnings": FIX / "html" / "article1.html",
-        "Leaders meet to discuss climate goals": FIX / "html" / "article2.html",
-    }
+def _build_fixture_brief(topic: str, limit: int) -> dict:
+    """Build a small, deterministic fixture brief for demos."""
+    date_str = _dt.date.today().isoformat()
+    topic_label = (topic or "Demo").strip() or "Demo"
 
     stories = []
-    for it in items[: max(args.limit, 1)]:
-        html_path = None
-        for k, p in html_map.items():
-            if k.lower() in it.title.lower():
-                html_path = p; break
+    for i in range(1, max(1, int(limit)) + 1):
+        sources = [
+            {"id": 1, "title": "Fixture Source A", "url": "https://example.com/a"},
+            {"id": 2, "title": "Fixture Source B", "url": "https://example.com/b"},
+        ]
+        summary_lines = [
+            {"sentence": f"{topic_label} story {i}: key fact from Source A.", "source": 1},
+            {"sentence": f"{topic_label} story {i}: corroborating detail from Source B.", "source": 2},
+        ]
+        stories.append(
+            {
+                "headline": f"{topic_label.title()} story {i} headline",
+                "summary": summary_lines,
+                "why_it_matters": "Demo output to verify pipelines (templates, feeds, schema).",
+                "disputed": "",
+                "sources": sources,
+            }
+        )
 
-        if html_path and html_path.exists():
-            html = html_path.read_text(encoding="utf-8")
-            text = extractor.extract_main_text(html)
-        else:
-            text = (it.description or it.title or "").strip()
-
-        stories.append({
-            "headline": it.title,
-            "text": text,
-            "source_url": it.url,
-            "published_at": it.published_at,
-        })
-
-    # near-dup filter
-    filtered = []
-    for s in stories:
-        if not any(dedupe.is_near_duplicate(s["text"], t["text"]) for t in filtered):
-            filtered.append(s)
-
-    # brief JSON
-    date_str = args.date or datetime.date.today().isoformat()
-    brief = {
+    return {
         "date": date_str,
-        "headline": "Demo Daily Brief",
-        "stories": []
+        "headline": f"{topic_label.title()} Daily Brief",
+        "stories": stories,
     }
-    for s in filtered:
-        brief["stories"].append({
-            "headline": s["headline"],
-            "summary": [
-                {"sentence": s["text"][:160] + ("..." if len(s["text"])>160 else ""), "source": 1}
-            ],
-            "why_it_matters": "Demo output from fixtures",
-            "disputed": "",
-            "sources": [
-                {"id": 1, "title": "Source", "url": s["source_url"]}
-            ]
-        })
 
-    # render
+
+def _render_txt(brief: dict) -> str:
+    lines = [f"Daily Brief — {brief['date']}", ""]
+    for s in brief["stories"]:
+        lines.append(s["headline"])
+        for ln in s["summary"]:
+            lines.append(f"  • {ln['sentence']} [{ln['source']}]")
+        if s.get("why_it_matters"):
+            lines.append(f"  Why it matters: {s['why_it_matters']}")
+        if s.get("disputed"):
+            lines.append(f"  Disputed: {s['disputed']}")
+        srcs = ", ".join(src["title"] for src in s["sources"])
+        lines.append(f"  Sources: {srcs}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--topic", type=str, default="", help="keyword to theme the demo stories")
+    ap.add_argument("--limit", type=int, default=3, help="number of stories")
+    ap.add_argument(
+        "--format",
+        type=str,
+        choices=["html", "txt", "json", "cards", "both", "all"],
+        default="both",
+        help="output format(s): 'both' = html+txt, 'all' = html+txt+json+cards",
+    )
+    ap.add_argument("--outdir", type=str, default="scripts/out/demo", help="output directory")
+    args = ap.parse_args()
+
+    # Build brief data
+    brief = _build_fixture_brief(args.topic, args.limit)
+    date_str = brief["date"]
+
+    OUT = Path(args.outdir).resolve()
+    OUT.mkdir(parents=True, exist_ok=True)
+
+    # Jinja environment for HTML templates
     env = Environment(
-        loader=FileSystemLoader(str(ROOT / "emailer" / "templates")),
+        loader=FileSystemLoader(str(Path("emailer") / "templates")),
         autoescape=select_autoescape(["html", "xml"]),
     )
     html_tpl = env.get_template("daily.html")
     cards_tpl = env.get_template("cards.html")
-    txt_tpl = env.get_template("daily.txt")
 
-    paths = []
-    json_manifest = None
-    if args.format in ("html", "both"):
+    paths: list[Path] = []
+
+    # HTML
+    if args.format in ("html", "both", "all"):
         html_out = html_tpl.render(date=brief["date"], stories=brief["stories"])
         html_path = OUT / f"daily-{date_str}.html"
         html_path.write_text(html_out, encoding="utf-8")
         paths.append(html_path)
 
-    if args.format in ("txt", "both"):
-        txt_out  = txt_tpl.render(date=brief["date"], stories=brief["stories"])
+    # TXT
+    if args.format in ("txt", "both", "all"):
+        txt_out = _render_txt(brief)
         txt_path = OUT / f"daily-{date_str}.txt"
         txt_path.write_text(txt_out, encoding="utf-8")
-
-
-if args.format in ("cards", "all"):
-    cards_out = cards_tpl.render(date=brief["date"], stories=brief["stories"])
-    cards_path = OUT / f"daily-{date_str}.cards.html"
-    cards_path.write_text(cards_out, encoding="utf-8")
-    paths.append(cards_path)
-
         paths.append(txt_path)
 
+    # JSON manifest
+    if args.format in ("json", "all"):
+        json_path = OUT / f"daily-{date_str}.json"
+        json_path.write_text(json.dumps(brief, ensure_ascii=False, indent=2), encoding="utf-8")
+        paths.append(json_path)
 
-# JSON manifest (optional)
-if args.format in ("json", "all"):
-    json_manifest = {
-        "date": brief["date"],
-        "headline": brief.get("headline", "Demo Daily Brief"),
-        "stories": brief["stories"],
-    }
-    json_path = OUT / f"daily-{date_str}.json"
-    json_path.write_text(__import__("json").dumps(json_manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    paths.append(json_path)
+    # Cards HTML
+    if args.format in ("cards", "all"):
+        cards_out = cards_tpl.render(date=brief["date"], stories=brief["stories"])
+        cards_path = OUT / f"daily-{date_str}.cards.html"
+        cards_path.write_text(cards_out, encoding="utf-8")
+        paths.append(cards_path)
 
+    # Print absolute paths for the workflow logs
     for p in paths:
         print(p)
 
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
