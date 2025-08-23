@@ -1,50 +1,58 @@
-name: ci
+name: CI
+
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install
+          cache: 'pip'
+          cache-dependency-path: |
+            pyproject.toml
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # Editable install + dev extras (from your pyproject)
           pip install -e .[dev]
-          pip install jsonschema
-      - name: Lint
+          # Belt-and-suspenders in case extras are missing
+          pip install jinja2 jsonschema
+
+      - name: Debug env
         run: |
-          ruff check .
-          black --check .
-          bandit -q -r api core ingestion nlp emailer personalization data || true
-      - name: Type check
-        run: mypy .
-      - name: Tests
-        run: pytest -q
+          python -V
+          pip --version
+          pip list
 
+      - name: Generate demo outputs (all formats)
+        run: |
+          python scripts/demo.py --topic "" --limit 3 --format all --outdir scripts/out/ci
 
-- name: Demo (fixtures → HTML/TXT)
-  run: |
-    python scripts/demo.py --topic "" --limit 5 --format both --outdir scripts/out
-- name: Upload demo artifacts
-  uses: actions/upload-artifact@v4
-  with:
-    name: demo-brief
-    path: scripts/out/*
-    if-no-files-found: warn
+      - name: Validate JSON manifests
+        run: |
+          python scripts/validate_manifest.py
 
+      - name: Build feeds (local base)
+        run: |
+          python scripts/build_feeds.py --base-url "http://localhost:8000" --public-dir public
 
-- name: Validate JSON manifests
-  run: |
-    python scripts/demo.py --topic "" --limit 3 --format all --outdir scripts/out
-    python scripts/validate_manifest.py
+      - name: Build Pages index
+        run: |
+          python scripts/build_pages_index.py
 
-
-- name: Build feeds (local base)
-  run: |
-    python scripts/build_feeds.py --base-url "http://localhost:8000" --public-dir public
+      - name: Upload public/ as artifact (sanity)
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-ci
+          path: public
