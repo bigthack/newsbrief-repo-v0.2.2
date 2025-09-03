@@ -59,7 +59,7 @@ jobs:
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
           LIMIT="${{ github.event.inputs.limit }}"
-          python scripts/live_demo.py --topic "${TOPIC:-tech}" --limit "${LIMIT:-3}" --outdir scripts/out/live
+          python -m scripts.live_demo.py --topic "${TOPIC:-tech}" --limit "${LIMIT:-3}" --outdir scripts/out/live
 
       - name: Debug list generated outputs
         run: |
