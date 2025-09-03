@@ -8,3 +8,12 @@ world:
   - https://www.aljazeera.com/xml/rss/all.xml
 business:
   - https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+finance:
+  - https://www.bloomberg.com/feed/podcast/etf-report.xml
+  - https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+  - https://www.cnbc.com/id/100003114/device/rss/rss.html
+  - https://feeds.reuters.com/reuters/businessNews
+  - https://www.marketwatch.com/feeds/topstories
+science:
+  - https://www.nature.com/subjects/science.rss
+  - https://www.sciencenews.org/feed

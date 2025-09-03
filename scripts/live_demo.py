@@ -244,6 +244,15 @@ def main() -> int:
         # Tiny QA: keep only sentences that are direct spans from sources (they are)
         stories.append(story)
 
+    cfg = yaml.safe_load(Path(args.sources).read_text(encoding="utf-8")) or {}
+    topics = sorted(cfg.keys())
+    urls = cfg.get(args.topic, [])
+    if not urls:
+        print(f"No feeds configured for topic={args.topic}. Available: {', '.join(topics) or '(none)'}", file=sys.stderr)
+        raise SystemExit(2)
+
+
+
     date_str = dt.date.today().isoformat()
     brief = {"date": date_str, "headline": f"{args.topic.title()} Daily Brief", "stories": stories}
 

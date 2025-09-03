@@ -47,11 +47,12 @@ jobs:
           pip install jinja2 jsonschema feedparser trafilatura pyyaml
 
       # Scheduled runs (kept as fixtures for now)
-      - name: Run scheduled demos tech and climate
+      - name: Run scheduled live tech and climate
         if: github.event_name == 'schedule'
         run: |
-          python scripts/demo.py --topic tech --limit 3 --format all --outdir scripts/out/tech
-          python scripts/demo.py --topic climate --limit 3 --format all --outdir scripts/out/climate
+          python -m scripts.live_demo --topic tech --limit 3 --outdir scripts/out/live
+          python -m scripts.live_demo --topic climate --limit 3 --outdir scripts/out/live
+          python -m scripts.live_demo --topic finance --limit 3 --outdir scripts/out/live
 
       # Manual run → live ingestion
       - name: Run manual live demo
