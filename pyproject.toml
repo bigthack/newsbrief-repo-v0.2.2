@@ -16,13 +16,17 @@ dependencies = [
   "feedparser>=6.0.11",
   "trafilatura>=1.7.0",
   "PyYAML>=6.0.1",
+  "requests>=2.32.0",
+  "urllib3>=2.2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=7.4",
 ]
-
+embed = [
+  "sentence-transformers>=3.0.0", "scikit-learn>=1.4.0", "hdbscan>=0.8.38"
+]
 [project.urls]
 Homepage  = "https://bigthack.github.io/newsbrief-repo-v0.2.2/"
 Repository = "https://github.com/bigthack/newsbrief-repo-v0.2.2"

@@ -72,6 +72,9 @@ jobs:
 
       - name: Validate manifests
         run: python scripts/validate_manifest.py
+      
+      - name: Show telemetry tail
+        run: test -f data/metrics/brief_metrics.jsonl && tail -n 3 data/metrics/brief_metrics.jsonl || echo "No metrics yet"
 
       - name: Build feeds
         run: |

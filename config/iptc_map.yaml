@@ -1,0 +1,18 @@
+topics:
+  technology:
+    - theverge.com
+    - arstechnica.com
+    - techcrunch.com
+    - wired.com
+    - reuters.com      # tech stories from Reuters feeds
+  business:
+    - wsj.com
+    - bloomberg.com
+    - reuters.com
+    - ft.com
+    - cnbc.com
+  world:
+    - bbc.co.uk
+    - bbc.com
+    - aljazeera.com
+    - reuters.com
