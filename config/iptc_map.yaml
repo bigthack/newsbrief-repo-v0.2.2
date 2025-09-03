@@ -16,3 +16,11 @@ topics:
     - bbc.com
     - aljazeera.com
     - reuters.com
+  finance:
+    - wsj.com
+    - bloomberg.com
+    - ft.com
+    - cnbc.com
+  science:
+    - nature.com
+    - sciencenews.org

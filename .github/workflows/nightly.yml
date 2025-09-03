@@ -76,6 +76,12 @@ jobs:
       - name: Show telemetry tail
         run: test -f data/metrics/brief_metrics.jsonl && tail -n 3 data/metrics/brief_metrics.jsonl || echo "No metrics yet"
 
+      - name: Post metrics to summary
+        run: |
+          echo "### Telemetry (last run)" >> $GITHUB_STEP_SUMMARY
+          test -f data/metrics/brief_metrics.jsonl && tail -n 1 data/metrics/brief_metrics.jsonl >> $GITHUB_STEP_SUMMARY || echo "No metrics yet" >> $GITHUB_STEP_SUMMARY
+
+
       - name: Build feeds
         run: |
           OWNER="${GITHUB_REPOSITORY%/*}"
